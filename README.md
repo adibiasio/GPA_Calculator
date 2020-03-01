@@ -1,2 +1,2 @@
-# GPA_Calculatora
+# GPA_Calculator
 

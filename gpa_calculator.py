@@ -2,13 +2,16 @@ import tkinter as tk
 import csv
 from tkinter import ttk, messagebox
 
+
 class Course:
+    # Creates a course object from the users input and allows the data to be used in calculations
+
     grade_and_gpa_increments = [(64, 0), (69, 2), (72, 2.7), (76, 3), (79, 3.4), (82, 3.7),
-                                (86, 4), (89, 4.3), (92, 4.5), (97, 4.7),(100, 5),] #(grade cutoff, equiv gpa)
+                                (86, 4), (89, 4.3), (92, 4.5), (97, 4.7), (100, 5)]  # (grade cutoff, equiv gpa)
     levels = ["AP", "H", "CP1", "CP2"]
 
     def __init__(self, summary):
-        #takes in a dictionary (summary) with the courses name, grade, level, and credits
+        # takes in a dictionary (summary) with the courses name, grade, level, and credits
         self.name = summary["name"]
         self.grade = summary["grade"]
         self.credits = summary["credits"]
@@ -16,22 +19,24 @@ class Course:
         self.gpa = self.grade_to_gpa()
 
     def grade_to_gpa(self):
-        #returns equivalent GPA value of a grade in respect to the class level
+        # returns equivalent GPA value of a grade in respect to the class level
         for increment in Course.grade_and_gpa_increments:
             # compares the grade entered to the cutoff; Adds thousandth to self.grade to overcome rounding error
             if round(self.grade + 0.001) <= increment[0]:
-                #retrieves the corresponding gpa value
+                # retrieves the corresponding gpa value
                 gpa = increment[1] - (0.5 * self.deduction)
-                return max(0, gpa) #returns equivalent GPA conversion
+                return max(0, gpa)  # returns equivalent GPA conversion
 
-class CourseGUI():
+
+class CourseGUI:
+    # Creates a row of GUI and allows the user to input their course data
     def __init__(self, row, frame, del_button_command):
-        # takes in an integer (row) that contains the row # of the object within the tkinter grid
+        # takes in an integer (row) that contains the row number of the object within the tkinter grid
         # takes in an tkinter frame object, indicating to which frame the course row belongs
         # takes in the remove course function from the Application class to bind it to the del_button widget
         self.row = row
 
-        #Initializes all tkinter objects and within the object's row
+        # Initializes all tkinter objects and within the object's row
         self.name_label = ttk.Label(frame, text="Course:")
         self.name_label.grid(row=self.row, column=0)
 
@@ -69,18 +74,20 @@ class CourseGUI():
                         self.space3, self.credits_combo, self.space4, self.del_button]
 
     def read(self):
-        #reads values of the entry fields and returns a dictionary with the aggregated data
+        # reads values of the entry fields and returns a dictionary with the aggregated data
         return {"name": self.name_entry.get(), "level": self.level_combo.get(),
                 "grade": self.grade_entry.get(), "credits": self.credits_combo.get()}
 
     def hide(self):
-        #Deletes all widgets within the course row from the grid
+        # Deletes all widgets within the course row from the grid
         for field in self.widgets:
             field.grid_forget()
 
+
 class Application:
+    # Creates a window Application and allows the user to manage the Application Window
     def __init__(self):
-        #Sets up GUI related to the application
+        # Sets up GUI related to the application
         self.root = tk.Tk()
         self.root.title("GPA Calculator")
 
@@ -102,24 +109,24 @@ class Application:
         self.menubar.add_cascade(menu=self.help_menu, label="Help")
 
         directions = \
-        "When entering your courses, only include those that are weighted. " \
-        "Any courses without a level (AP, Honors, CP1, or CP2) should not be included. " \
-        "Enter in the name, level, grade and number of credits for each course. " \
-        "Full year courses are 5 credits, while half year courses are 2.5 credits." \
-        "\n\n" \
-        "To calculate a Year GPA, enter all weighted courses for that year, and then select the \"Year GPA\" check box. " \
-        "Finally, press the \"Compute GPA\" button."\
-        "\n\n" \
-        "To calculate a Semester GPA, enter all weighted full year courses and semester courses taken in the first semester. " \
-        "Select the \"Semester GPA\" check box and press the \"Compute GPA\" button. " \
-        "\n\n" \
-        "If the returned GPA is not what you expect, double check the values entered for all courses."
+            "When entering your courses, only include those that are weighted. " \
+            "Any courses without a level (AP, Honors, CP1, or CP2) should not be included. " \
+            "Enter in the name, level, grade and number of credits for each course. " \
+            "Full year courses are 5 credits, while half year courses are 2.5 credits." \
+            "\n\n" \
+            "To calculate a Year GPA, enter all weighted courses for that year, and then select the \"Year GPA\" check box. " \
+            "Finally, press the \"Compute GPA\" button."\
+            "\n\n" \
+            "To calculate a Semester GPA, enter all weighted full year courses and semester courses taken in the first semester. " \
+            "Select the \"Semester GPA\" check box and press the \"Compute GPA\" button. " \
+            "\n\n" \
+            "If the returned GPA is not what you expect, double check the values entered for all courses."
 
         about_message = "GPA Calculator " \
-        "\n\nCalculates Various GPA and Course Statistics per Westford Academy GPA Calculation Guidelines."
+            "\n\nCalculates Various GPA and Course Statistics per Westford Academy GPA Calculation Guidelines."
 
-        self.help_menu.add_command(label="Directions", command = lambda: self.pop_up("Directions", directions))
-        self.help_menu.add_command(label="About", command=lambda: self.pop_up("About",about_message ))
+        self.help_menu.add_command(label="Directions", command=lambda: self.pop_up("Directions", directions))
+        self.help_menu.add_command(label="About", command=lambda: self.pop_up("About", about_message))
         self.file_menu.add_command(label="Save", command=self.save, accelerator="Ctrl+S")
         self.root.bind("<Control-s>", lambda event: self.save())
 
@@ -160,15 +167,15 @@ class Application:
         self.root.mainloop()
 
     def add_course(self):
-        # instantiates a new courseGUI object & shifts objects below it
+        #  instantiates a new courseGUI object & shifts objects below it
         self.courses_GUI.append(CourseGUI(len(self.courses_GUI) + 1, self.course_frame, self.remove_course))
         self.shift_widgets(self.compute_widgets, False)
 
     def remove_course(self, del_button_clicked):
-        # Removes and handles the specified course from the gui & the course data
+        #  Removes and handles the specified course from the gui & the course data
         for course in self.courses_GUI:
             if course.del_button == del_button_clicked:
-                # retrieves the CourseGUI object linked to the row to be deleted
+                #  retrieves the CourseGUI object linked to the row to be deleted
                 del_row = self.courses_GUI[course.row - 1]
 
         del_row.hide()
@@ -182,8 +189,8 @@ class Application:
 
     @staticmethod
     def shift_widgets(rows, shift_up):
-        # Takes in an iterable of rows in the gui.
-        # Takes in a boolean, indicating whether the widgets should be shifted up or down
+        #  Takes in an iterable of rows in the gui.
+        #  Takes in a boolean, indicating whether the widgets should be shifted up or down
         row_change = -1 if shift_up else 1
         for gui_row in rows:
             for widget in gui_row:
@@ -191,7 +198,7 @@ class Application:
                 widget.grid(row=old_row + row_change)
 
     def validate_data(self):
-        # validates user input & raises errors. Notifies User of any Errors
+        #  validates user input & raises errors. Notifies User of any Errors
         for course in self.courses_GUI:
             values = course.read()
             try:
@@ -200,21 +207,21 @@ class Application:
             except ValueError:
                 pass
 
-            if type(values.get("grade")) != float  or values.get("grade") < 0 or values.get("grade") > 100:
-                self.pop_up("Error", "Invalid Grade Entry: " \
+            if type(values.get("grade")) != float or values.get("grade") < 0 or values.get("grade") > 100:
+                self.pop_up("Error", "Invalid Grade Entry: "
                                      "\n\nPlease enter an integer or float between 0 and 100 under the grade field.")
                 raise ValueError
             if values.get("level") not in Course.levels:
-                self.pop_up("Error", "Invalid Level Entry: " \
+                self.pop_up("Error", "Invalid Level Entry: "
                                      "\n\nPlease select a level.")
                 raise ValueError
             if values.get("credits") not in [2.5, 5]:
-                self.pop_up("Error", "Invalid Credits Entry: " \
+                self.pop_up("Error", "Invalid Credits Entry: "
                                      "\n\nPlease select a number of credits.")
                 raise ValueError
 
     def init_course_obj(self):
-        # Retrieves new course data and instantiates them as Course objects.
+        #  Retrieves new course data and instantiates them as Course objects.
         self.validate_data()
         for course in self.courses_GUI:
             values = course.read()
@@ -223,9 +230,9 @@ class Application:
             self.courses.append(Course(values))
 
     def compute_gpa(self, options):
-        # Calculates the gpa for the selected options & displays them
+        #  Calculates the gpa for the selected options & displays them
         try:
-            self.courses = [] # empties current courses, so that the latest course data can be retrieved
+            self.courses = []  # empties current courses, so that the latest course data can be retrieved
             self.init_course_obj()
         except ValueError:
             return
@@ -233,17 +240,17 @@ class Application:
         label_texts = ["Year GPA: ", "Sem GPA: "]
         corresponding_func = [self.year_gpa(), self.sem_gpa()]
 
-        # clears previously calculated gpa's & resets the compute_widget list to the action selection row
+        #  clears previously calculated gpa's & resets the compute_widget list to the action selection row
         excess_widgets = self.compute_widgets[1:]
         for pair in excess_widgets:
             for widget in pair:
                 widget.grid_forget()
         self.compute_widgets = self.compute_widgets[:1]
 
-        # Creating the GPA Display
+        #  Creating the GPA Display
         for option in options:
             if option.get() == 1:
-                # compute_widgets[-1][-1].grid_info()["row"] retrieves the row of the last widget in the GUI
+                #  compute_widgets[-1][-1].grid_info()["row"] retrieves the row of the last widget in the GUI
                 label = ttk.Label(self.course_frame, text=label_texts[options.index(option)])
                 label.grid(row=self.compute_widgets[-1][-1].grid_info()["row"] + 1, column=0)
                 calculated_gpa = ttk.Label(self.course_frame, text=str(corresponding_func[options.index(option)]))
@@ -251,13 +258,13 @@ class Application:
                 self.compute_widgets.append((label, calculated_gpa))
 
     def year_gpa(self):
-        # Calculates & returns Year GPA rounded to the hundreths place
+        #  Calculates & returns Year GPA rounded to the hundreths place
         total_weighted_gpa = sum([course.gpa * course.credits for course in self.courses])
         total_credits = sum([course.credits for course in self.courses])
         return round(total_weighted_gpa / total_credits, 2)
 
     def sem_gpa(self):
-        # Calculates & returns Semester GPA rounded to the hundreths place
+        #  Calculates & returns Semester GPA rounded to the hundreths place
         return round(sum([course.gpa * 2.5 for course in self.courses]) / (len(self.courses) * 2.5), 2)
 
     def save(self):
@@ -293,13 +300,11 @@ class Application:
 
     @staticmethod
     def pop_up(title, message):
-        # Displays given information in a popup window
+        #  Displays given information in a popup window
         messagebox.showinfo(
             title=title,
             message=message
         )
-
-
 
 
 if __name__ == "__main__":

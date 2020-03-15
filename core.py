@@ -1,18 +1,18 @@
-import tkinter as tk
 import csv
-from tkinter import ttk, messagebox
 
 """
 TODO:
+- virtual environments (watch cory schafer's VS Code video - venv included in the video)
+- Rebuild using Kivy
+- Make available with Android (Using Kivy)
 - Implement a cumulative gpa function, Quarter GPA Function
 - Parse from pdf file
 - Make a desktop shortcut
-- Make available with Android
 - Look into storing data into MySQL / SQLite database instead of CSV file
 
 #Possible Future Add on, Grade Breakdown & Calculator
 #Possible Future Add on, parse data from ipass pdf Report Card or Progress Report
-""" 
+"""
 
 
 class EmptyCourse(Exception):
@@ -37,21 +37,23 @@ class Course(object):
         self.gpa = self.grade_to_gpa()
 
     def grade_to_gpa(self):
-        # returns equivalent GPA value of a grade in respect to the class level
+        # Returns equivalent GPA value of a grade in respect to the class level
         for increment in Course.grade_and_gpa_increments:
-            # compares the grade entered to the cutoff; Adds thousandth to self.grade to overcome rounding error
+            # Compares the grade entered to the cutoff; Adds thousandth to self.grade to overcome rounding error
             if round(self.grade + 0.001) <= increment[0]:
-                # retrieves the corresponding gpa value
+                # Retrieves the corresponding gpa value
                 gpa = increment[1] - (0.5 * self.deduction)
-                return max(0, gpa)  # returns equivalent GPA conversion
+                return max(0, gpa)  # Returns equivalent GPA conversion
 
 
 class CourseGUI(object):
     # Creates a row of GUI and allows the user to input their course data
-    def __init__(self, entry_widgets, widget_hide_fn):
-        # Takes in a list of tuples (key, value) of all entry widgets in a row
+    def __init__(self, entry_widget_keys, entry_widgets, widget_hide_fn):
+        # Takes in a list of keys corresponding to their entry widgets
+        # Takes in a list of entry widgets in a row
         # Takes in a hide function used to hide a widget from the GUI
 
+        self.entry_widget_keys = entry_widget_keys
         self.entry_widgets = entry_widgets
         self.widgets = []
         self.widget_hide_fn = widget_hide_fn
@@ -83,8 +85,8 @@ class CourseGUI(object):
     def read(self):
         # reads values of the entry fields and returns a dictionary with the aggregated data
         read_dict = {}
-        for entry in self.entry_widgets:
-            read_dict[entry[0]] = entry[1].get()
+        for key, widget in zip(self.entry_widget_keys, self.entry_widgets):
+            read_dict[key] = widget.get()
         return read_dict
 
     def hide(self):
@@ -95,9 +97,10 @@ class CourseGUI(object):
 
 class Tab(object):
     # Defines functions used for course management
-    def __init__(self, widget_container, GUI_specific_course_GUI_class):
+    def __init__(self, widget_container, GUI_specific_course_GUI_class, create_compute_widgets):
         # Takes in a GUI container (e.g. a Frame) of the widgets
         # Takes in the GUI specific CourseGUI class
+        # Takes in a compute widget fn used to create widgets related to the GPA Display
 
         self.courses = []
         self.courses_GUI = []
@@ -106,11 +109,12 @@ class Tab(object):
 
         self.course_widget_container = widget_container
         self.GUI_specific_course_GUI_class = GUI_specific_course_GUI_class
+        self.create_compute_widgets = create_compute_widgets
 
     def add_course(self):
         # Instantiates a new courseGUI object & shifts objects below it
-        self.courses_GUI.append(self.GUI_specific_course_GUI_class(len(self.courses_GUI) + 1, 
-                                self.course_widget_container, self.remove_course_on_click))
+        self.courses_GUI.append(self.GUI_specific_course_GUI_class(len(self.courses_GUI) + 1,
+                                                                   self.course_widget_container, self.remove_course_on_click))
         self.shift_widgets(self.compute_widgets, False)
 
     def add_course_if_empty(self):
@@ -157,7 +161,6 @@ class Tab(object):
         # Returns all empty rows in a tab
         empty_courses = []
         for course in self.courses_GUI:
-            values = course.read()
             if course.is_empty():
                 empty_courses.append(course)
         return empty_courses
@@ -191,7 +194,8 @@ class Tab(object):
 
     def year_gpa(self):
         # Calculates & returns Year GPA rounded to the hundreths place
-        total_weighted_gpa = sum([course.gpa * course.credits for course in self.courses])
+        total_weighted_gpa = sum(
+            [course.gpa * course.credits for course in self.courses])
         total_credits = sum([course.credits for course in self.courses])
         return round(total_weighted_gpa / total_credits, 2)
 
@@ -211,18 +215,15 @@ class Tab(object):
             try:
                 self.tab_clean_up()
                 if self.is_empty_course_in_tab():
-                    raise EmptyCourse 
+                    raise EmptyCourse
                 self.validate_tab_data()
             except ValueError:
                 return
-            
+
             # Empties current courses, & updates course objects list
             self.courses = []
             for course in self.courses_GUI:
                 self.init_course_obj(course)
-
-            label_texts = ["Year GPA: ", "Sem GPA: "]
-            corresponding_value = [self.year_gpa(), self.sem_gpa()]
 
             # Clears previously calculated gpa's & resets the compute_widget list to the action selection row
             excess_widgets = self.compute_widgets[2:]
@@ -231,15 +232,7 @@ class Tab(object):
                     widget.grid_forget()
             self.compute_widgets = self.compute_widgets[:2]
 
-            # Creating the GPA Display
-            for i, option in enumerate(options):
-                if option == 1:
-                    # compute_widgets[-1][-1].grid_info()["row"] retrieves the row of the last widget in the GUI
-                    label = ttk.Label(self.course_widget_container, text=label_texts[i])
-                    label.grid(row=self.compute_widgets[-1][-1].grid_info()["row"] + 2, column=0)
-                    calculated_gpa = ttk.Label(self.course_widget_container, text=str(corresponding_value[i]))
-                    calculated_gpa.grid(row=self.compute_widgets[-1][-1].grid_info()["row"] + 2, column=1)
-                    self.compute_widgets.append((label, calculated_gpa))
+            self.create_compute_widgets()
 
 
 class Application(object):
@@ -251,14 +244,14 @@ class Application(object):
         # Validates data of all tabs & deletes all empty courses
         for tab in self.tabs:
             for empty_course in tab.empty_courses():
-                tab.remove_course(empty_course) 
+                tab.remove_course(empty_course)
             tab.validate_tab_data()
 
     def save(self):
         # Writes data across all tabs to csv file
 
         # Validates data & terminates save fn if any invalid data is found
-        try:   
+        try:
             self.validate_and_del_empty_courses_all_tabs()
         except ValueError:
             return
@@ -285,7 +278,8 @@ class Application(object):
 
             current_tab = 0
             for line in lines:
-                if line.get("year", "") != self.tabs[current_tab].year: # Finds Tab Obj and its year {str}
+                # Finds Tab Obj and its year {str}
+                if line.get("year", "") != self.tabs[current_tab].year:
                     current_tab += 1
 
                 if line.get("year", "") == self.tabs[current_tab].year:
@@ -306,4 +300,3 @@ class Application(object):
 
             for tab in self.tabs:
                 tab.add_course_if_empty()
-

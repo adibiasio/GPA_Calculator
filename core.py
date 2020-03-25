@@ -1,6 +1,6 @@
 import csv
-import sys
-from os import path
+import os
+from pathlib import Path
 
 
 class EmptyRow(Exception):
@@ -398,10 +398,6 @@ class Application(object):
 
 
 def find_path(relative_path):
-    # Used for locating data files with pyinstaller --onefile .exe
-    try:
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = path.abspath(".")
-
-    return path.join(base_path, relative_path)
+    # Used for locating data files from users home dir
+    home_path = str(Path.home())
+    return os.path.join(home_path, relative_path)

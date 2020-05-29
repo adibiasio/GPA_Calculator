@@ -457,6 +457,13 @@ class tkApp(core.Application, tk.Tk):
     # Returns the current tab number
     def tab_num(self): return self.notebook.index(self.notebook.select())
 
+    def cumulative_gpa(self, quarter=None):
+        tabs = self.tabs[:]
+        self.tabs = self.tabs[:self.tab_num()+1]
+        gpa = core.Application.cumulative_gpa(self, quarter=quarter)
+        self.tabs = tabs
+        return gpa
+
     def insert_values(self, row_obj, line, keys):
         # Inserts csv file data into the data input widgets
         # Takes in a courseRow object
